@@ -1,0 +1,37 @@
+{
+  "name": "newfrontend",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/node": "^8.3.4",
+    "@astrojs/react": "^3.6.2",
+    "@astrojs/tailwind": "^5.1.2",
+    "@sentry/astro": "^7.109.0",
+    "@spotlightjs/astro": "^1.0.19",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "astro": "^4.16.16",
+    "astro-meta-tags": "^0.3.1",
+    "axios": "^1.7.8",
+    "drizzle-orm": "^0.37.0",
+    "hono": "^4.6.11",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.4.0",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3"
+  },
+  "packageManager": "pnpm@9.1.1+sha512.14e915759c11f77eac07faba4d019c193ec8637229e62ec99eefb7cf3c3b75c64447882b7c485142451ee3a6b408059cdfb7b7fa0341b975f12d0f7629c71195",
+  "devDependencies": {
+    "drizzle-kit": "^0.29.1",
+    "tailwind-scrollbar": "^3.1.0"
+  }
+}

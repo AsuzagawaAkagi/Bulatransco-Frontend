@@ -1,0 +1,167 @@
+---
+import { Navbar } from "@/components/Navbar";
+import { actions } from "astro:actions";
+import { ViewTransitions } from "astro:transitions";
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+
+const loggedIn = Astro.locals.valid;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Astro description" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <ViewTransitions />
+    <title>{title}</title>
+  </head>
+  <body>
+    {
+      loggedIn && (
+        <div
+          class="fixed top-8 left-1/2 -translate-x-1/2
+          px-4 py-2 loading-indicator-inactive loader 
+          bg-white/90 backdrop-blur-sm z-50 rounded-lg shadow-lg
+          border-2 border-black/20 transition-all duration-300"
+        >
+          <div class="flex items-center gap-2">
+            <div class="animate-spin h-4 w-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <span class="text-base font-semibold">Loading...</span>
+          </div>
+        </div>
+        <div class="bg-white">
+          <nav class="flex flex-wrap px-2 md:px-4 py-2 justify-between items-center" aria-label="Breadcrumb">
+            <ol class="inline-flex flex-wrap items-center gap-1 md:gap-2">
+              <li class="inline-flex items-center">
+                <a
+                  href="/"
+                  class="font-mono text-xs md:text-sm px-2 md:px-2.5 py-0.5 
+                  border border-sky-500 text-sky-500 
+                  hover:bg-sky-500 hover:text-white 
+                  transition-all duration-300 flex items-center gap-1
+                  rounded-md"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    class="h-3.5 w-3.5"
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round" 
+                      stroke-width="2" 
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" 
+                    />
+                  </svg>
+                  Home
+                </a>
+              </li>
+              {
+                Astro.url.pathname
+                  .split("/")
+                  .filter(Boolean)
+                  .map((segment, index, array) => (
+                    <li>
+                      <div class="flex items-center">
+                        <span class="mx-2 md:mx-3 text-black font-bold">/</span>
+                        {index === array.length - 1 ? (
+                          <span class="font-mono text-base md:text-lg px-2 md:px-3 py-1 bg-gray-100 border-2 border-black">
+                            {segment}
+                          </span>
+                        ) : (
+                          <a
+                            href={`/${array.slice(0, index + 1).join("/")}`}
+                            class="font-mono text-base md:text-lg border-2 border-black px-2 md:px-3 py-1 hover:bg-black hover:text-white transition-colors"
+                          >
+                            {segment}
+                          </a>
+                        )}
+                      </div>
+                    </li>
+                  ))
+              }
+            </ol>
+            
+            <form method="POST" action={actions.logoutFunction}>
+              <button
+                class="font-mono text-xs md:text-sm px-2 md:px-2.5 py-0.5 
+                border border-red-500 text-red-500 
+                hover:bg-red-500 hover:text-white 
+                transition-all duration-300 flex items-center gap-1
+                rounded-md"
+                type="submit"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                LOGOUT
+              </button>
+            </form>
+          </nav>
+        </div>
+      )
+    }
+    
+    <slot />
+  </body>
+</html>
+
+<style>
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  .loading-indicator-inactive {
+    transform: translate(-50%, -100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .loading-indicator-active {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+
+  a, button {
+    transition: all 0.2s ease-in-out;
+  }
+
+  a:hover, button:hover {
+    transform: translateY(-1px);
+  }
+
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid black;
+    outline-offset: 2px;
+  }
+</style>
+
+<script>
+  document.addEventListener("astro:before-preparation", () => {
+     ("astro:before-preparation");
+    const loader = document.getElementsByClassName("loader")[0];
+    loader.classList.remove("loading-indicator-inactive");
+    loader.classList.add("loading-indicator-active");
+  });
+  document.addEventListener("astro:after-preparation", () => {
+     ("astro:after-preparation");
+    const loader = document.getElementsByClassName("loader")[0];
+    loader.classList.remove("loading-indicator-active");
+    loader.classList.add("loading-indicator-inactive");
+  });
+</script>

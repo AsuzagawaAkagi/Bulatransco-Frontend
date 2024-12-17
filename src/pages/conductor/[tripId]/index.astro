@@ -1,0 +1,166 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { fetchClient } from "@/lib/client";
+import { ConductorPassengerControl } from "@/components/ConductorPassengerControl";
+import { UserLogComponent } from "@/components/UserLogComponent";
+import { InspectorTripControl } from "@/components/InspectorTripControl";
+
+type Trip = {
+  id: string;
+  startDate: string;
+  endDate: string;
+  tripStatus: "not_started" | "in_progress" | "completed";
+  relatedDestination: { name: string } | null;
+  relatedInspector: { name: string } | null;
+  totalPassengers: number;
+  currentPassengers: number;
+};
+
+const { tripId } = Astro.params;
+
+if (!tripId) {
+  return Astro.redirect("/conductor");
+}
+
+const { data: trips } = await fetchClient.get<Trip[]>(
+  `/conductor/trips?tripId=${tripId}`,
+  {
+    headers: {
+      Authorization: `Bearer ${Astro.cookies.get("roletoken")?.value}`,
+    },
+  }
+);
+
+const { data: requests } = await fetchClient.get<any[]>(
+  `/conductor/requests/${tripId}`,
+  {
+    headers: {
+      Authorization: `Bearer ${Astro.cookies.get("roletoken")?.value}`,
+    },
+  }
+);
+
+const singleRecord = trips[0];
+---
+
+<Layout title={`Trip Details - ${tripId}`}>
+  <h1
+    class="scroll-m-20 text-2xl md:text-4xl p-2 font-extrabold tracking-tight lg:text-5xl"
+  >
+    Trip Details - <span transition:name={"tripId" + tripId}>{tripId}</span>
+  </h1>
+
+  <div class="grid gap-4 p-2 md:p-4 h-full">
+    <div class="flex flex-col md:flex-row min-w-full md:h-80 gap-4">
+      <div class="border-4 flex-grow border-black bg-white p-4 md:p-6">
+        <h2
+          class="text-2xl md:text-3xl font-bold uppercase border-b-4 border-black pb-2"
+        >
+          Inspector Details
+        </h2>
+        <div class="mt-4">
+          <div class="border-2 border-black p-2 md:p-4 bg-gray-100">
+            <p class="font-mono text-sm md:text-base">
+              Name: {singleRecord.relatedInspector?.name ?? "NONE"}
+            </p>
+          </div>
+        </div>
+      </div>
+      <ConductorPassengerControl
+        client:only="react"
+        initialCount={singleRecord.currentPassengers}
+        tripStatus={singleRecord.tripStatus}
+        tripId={tripId}
+        requests={requests}
+      />
+    </div>
+    <div class="border-4 border-black bg-white p-4 md:p-6 min-h-[40vh]">
+      <h2 class="text-2xl md:text-3xl font-bold uppercase border-b-4 border-black pb-2 mb-4">
+        Passenger Count Requests
+      </h2>
+      <div class="overflow-auto max-h-[60vh]">
+        <table class="w-full border-collapse">
+          <thead class="bg-gray-100 sticky top-0">
+            <tr>
+              <th class="border-b-2 border-black p-3 text-left">Request ID</th>
+              <th class="border-b-2 border-black p-3 text-left">Request Value</th>
+              <th class="border-b-2 border-black p-3 text-left">Request Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {requests.map((request) => (
+              <tr class="hover:bg-gray-50 border-b border-gray-200">
+                <td class="p-3 font-mono">{request.id}</td>
+                <td class="p-3">Request to change passenger count by {request.requestValue} passengers</td>
+                <td class="p-3">
+                  <span class={`px-2 py-1 rounded-full text-sm ${
+                    request.requestStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    request.requestStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {request.requestStatus.charAt(0).toUpperCase() + request.requestStatus.slice(1)}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="border-4 border-black bg-white p-4 md:p-6">
+      <h2
+        class="text-2xl md:text-3xl font-bold uppercase border-b-4 border-black pb-2"
+      >
+        Destination Details
+      </h2>
+      <div class="mt-4 flex flex-col md:flex-row gap-4 w-full">
+        <div class="border-2 flex-grow border-black p-2 md:p-4 bg-gray-100">
+          <p class="font-mono text-sm md:text-base">
+            Name: {singleRecord.relatedDestination?.name ?? "NONE"}
+          </p>
+        </div>
+        <div class="border-2 flex-grow border-black p-2 md:p-4 bg-gray-100">
+          <p class="font-mono text-sm md:text-base">
+            Initial Passenger Count: {singleRecord.totalPassengers}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- <div class="border-4 border-black bg-white p-4 md:p-6">
+      <h2
+        class="text-2xl md:text-3xl font-bold uppercase border-b-4 border-black pb-2"
+      >
+        Trip Status
+      </h2>
+      <div class="mt-4">
+        <div class="border-2 border-black p-2 md:p-4 bg-gray-100">
+          <p class="font-mono text-sm md:text-base">
+            Status: {
+              singleRecord.tripStatus
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase())
+            }
+          </p>
+        </div>
+        {
+          singleRecord.tripStatus === "not_started" ? (
+            <button class="bg-blue-500 text-white p-2 rounded-md">
+              Start Trip
+          </button>
+        ) : }
+      </div>
+    </div> -->
+    <InspectorTripControl
+      client:only="react"
+      tripId={tripId}
+      tripStatus={singleRecord.tripStatus}
+    />
+  </div>
+  <UserLogComponent
+    tripId={tripId}
+    token={Astro.cookies.get("roletoken")?.value || ""}
+    client:only="react"
+  />
+</Layout>

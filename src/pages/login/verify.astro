@@ -1,0 +1,27 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { fetchClient } from "@/lib/client";
+
+const url = Astro.url.searchParams;
+const token = url.get("token");
+
+if (!token) {
+  return Astro.redirect("/login");
+}
+
+const { data } = await fetchClient.get<{ valid: boolean; role: string }>(
+  `/auth/verify?token=${token}`
+);
+
+if (data.valid) {
+  Astro.cookies.set("roletoken", token as string, {
+    path: "/",
+    httpOnly: true,
+    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+    sameSite: "lax",
+  });
+  return Astro.redirect(`/${data.role}`);
+} else {
+  return Astro.redirect("/login");
+}
+---

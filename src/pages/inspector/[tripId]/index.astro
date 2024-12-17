@@ -1,0 +1,141 @@
+---
+import { InspectorRequestControl } from "@/components/InspectorRequestControl";
+import { InspectorTripControl } from "@/components/InspectorTripControl";
+import { UserLogComponent } from "@/components/UserLogComponent";
+import Layout from "@/layouts/Layout.astro";
+import { fetchClient } from "@/lib/client";
+
+const { tripId } = Astro.params;
+
+if (!tripId) {
+  return Astro.redirect("/inspector");
+}
+
+type Trip = {
+  id: string;
+  startDate: string;
+  endDate: string;
+  tripStatus: "not_started" | "in_progress" | "completed" | null;
+  relatedDestination: { name: string } | null;
+  relatedInspector: { name: string } | null;
+  currentPassengers: number | null;
+};
+
+const { data: trips } = await fetchClient
+  .get<Trip[]>(`/inspector/trips?tripId=${tripId}`, {
+    headers: {
+      Authorization: `Bearer ${Astro.cookies.get("roletoken")?.value}`,
+    },
+  })
+  .catch((error) => {
+    console.error(error);
+    return { data: [] };
+  });
+
+const { data: requests } = await fetchClient
+  .get<any[]>(`/conductor/requests/${tripId}`, {
+    headers: {
+      Authorization: `Bearer ${Astro.cookies.get("roletoken")?.value}`,
+    },
+  })
+  .catch((error) => {
+    console.error(error);
+    return { data: [] };
+  });
+
+const singleRecord = trips[0];
+---
+
+<Layout title={`Trip - ${tripId?.trim()}`}>
+  <div class="grid gap-4 p-4">
+    <div class="border-4 border-black bg-white p-4 md:p-6">
+      <h2
+        class="scroll-m-20 text-2xl md:text-3xl font-bold tracking-tight uppercase border-b-4 border-black pb-2"
+      >
+        Trip Details
+      </h2>
+      <div class="mt-4">
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="border-2 border-black p-4 bg-gray-100">
+            <dt class="font-mono text-sm md:text-base font-bold">Trip ID</dt>
+            <dd class="mt-1 font-mono text-sm md:text-base">
+              <a
+                transition:name={`trip-${tripId}`}
+                class="font-medium text-primary underline underline-offset-4 hover:text-blue-600"
+                href={`/inspector/${tripId}`}
+              >
+                {tripId}
+              </a>
+            </dd>
+          </div>
+
+          <div class="border-2 border-black p-4 bg-gray-100">
+            <dt class="font-mono text-sm md:text-base font-bold">Status</dt>
+            <dd class="mt-1 font-mono text-sm md:text-base">
+              <span
+                class={singleRecord.tripStatus === "not_started"
+                  ? "text-blue-600 font-semibold"
+                  : singleRecord.tripStatus === "in_progress"
+                    ? "text-blue-600 font-semibold"
+                    : "text-green-600 font-semibold"}
+              >
+                {
+                  singleRecord.tripStatus
+                    ?.replace(/_/g, " ")
+                    .replace(/\b\w/g, (c) => c.toUpperCase()) || "Not Started"
+                }
+              </span>
+            </dd>
+          </div>
+
+          <div class="border-2 border-black p-4 bg-gray-100">
+            <dt class="font-mono text-sm md:text-base font-bold">Start Date</dt>
+            <dd class="mt-1 font-mono text-sm md:text-base">
+              {new Date(singleRecord.startDate).toLocaleDateString()}
+            </dd>
+          </div>
+
+          <div class="border-2 border-black p-4 bg-gray-100">
+            <dt class="font-mono text-sm md:text-base font-bold">End Date</dt>
+            <dd class="mt-1 font-mono text-sm md:text-base">
+              {new Date(singleRecord.endDate).toLocaleDateString()}
+            </dd>
+          </div>
+
+          <div class="border-2 border-black p-4 bg-gray-100">
+            <dt class="font-mono text-sm md:text-base font-bold">
+              Destination
+            </dt>
+            <dd class="mt-1 font-mono text-sm md:text-base">
+              {singleRecord.relatedDestination?.name || "N/A"}
+            </dd>
+          </div>
+
+          <div class="border-2 border-black p-4 bg-gray-100">
+            <dt class="font-mono text-sm md:text-base font-bold">Inspector</dt>
+            <dd class="mt-1 font-mono text-sm md:text-base">
+              {singleRecord.relatedInspector?.name || "N/A"}
+            </dd>
+          </div>
+          <div class="border-2 border-black p-4 bg-gray-100">
+            <dt class="font-mono text-sm md:text-base font-bold">Current Passengers</dt>
+            <dd class="mt-1 font-mono text-sm md:text-base">
+              {singleRecord.currentPassengers || "N/A"}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+    <UserLogComponent
+      tripId={tripId}
+      client:only="react"
+      token={Astro.cookies.get("roletoken")?.value || ""}
+    />
+    <InspectorRequestControl
+      tripId={tripId}
+      requests={requests}
+      client:only="react"
+      token={Astro.cookies.get("roletoken")?.value || ""}
+    />
+  </div>
+</Layout>
