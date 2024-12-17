@@ -63,5 +63,5 @@ class CustomClient {
 }
 
 export const fetchClient = new CustomClient({
-  baseURL: import.meta.env.BACKEND_URL || "44.226.145.213",
+  baseURL: import.meta.env.BACKEND_URL || "http://localhost:3002/",
 });
